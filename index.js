@@ -8,19 +8,26 @@ require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { 
-  cors: { 
-    origin: 'https://citymall-meme-assignment-f2xl7hq3a.vercel.app',
-    methods: ['GET', 'POST']
+const io = new Server(server, {
+  cors: {
+    origin: 'https://citymall-meme-assignment-hjv1osmjx.vercel.app',
+    methods: ['GET', 'POST'],
+    credentials: true
   },
   pingTimeout: 60000,
-  pingInterval: 25000
+  pingInterval: 25000,
+  transports: ['websocket', 'polling'],
+  allowEIO3: true // Support for older Socket.IO clients
 });
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-app.use(cors({ origin: 'https://citymall-meme-assignment-f2xl7hq3a.vercel.app' }));
+app.use(cors({
+  origin: 'https://citymall-meme-assignment-hjv1osmjx.vercel.app',
+  methods: ['GET', 'POST'],
+  credentials: true
+}));
 app.use(express.json());
 
 // Mock users for hackathon
@@ -37,19 +44,18 @@ async function generateAICaptionAndVibe(title, tags, image_url) {
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
-    // Clean up response (Gemini sometimes wraps JSON in ```json)
     const cleanedText = text.replace(/```json\n|\n```/g, '').trim();
     return JSON.parse(cleanedText);
   } catch (err) {
     console.error('Gemini API error:', err.message);
-    return { caption: 'YOLO to the moon!', vibe: 'Neon Chaos Mode' }; // Fallback
+    return { caption: 'YOLO to the moon!', vibe: 'Neon Chaos Mode' };
   }
 }
 
-
+// Basic route
 app.get('/', (req, res) => res.send('Cybermeme Market: Neon chaos awaits!'));
 
-
+// Get all memes
 app.get('/memes', async (req, res) => {
   console.log('Hit /memes endpoint');
   const { data, error } = await supabase.from('memes').select('*').order('created_at', { ascending: false });
@@ -60,6 +66,7 @@ app.get('/memes', async (req, res) => {
   res.json(data);
 });
 
+// Create meme
 app.post('/memes', async (req, res) => {
   console.log('Hit POST /memes:', req.body);
   const { title, image_url, tags, owner } = req.body;
@@ -67,7 +74,6 @@ app.post('/memes', async (req, res) => {
     console.log('Invalid user:', owner);
     return res.status(401).send('User not found');
   }
-
   const { caption, vibe } = await generateAICaptionAndVibe(title, tags, image_url || 'https://picsum.photos/200');
   const { data, error } = await supabase.from('memes').insert({
     title,
@@ -113,7 +119,6 @@ app.post('/memes/:id/vote', async (req, res) => {
   if (!users[user]) return res.status(401).send('User not found');
   if (!['up', 'down'].includes(type)) return res.status(400).send('Invalid vote type');
   const increment = type === 'up' ? 1 : -1;
-  // Fetch current upvotes
   const { data: meme, error: fetchError } = await supabase
     .from('memes')
     .select('upvotes')
@@ -123,7 +128,6 @@ app.post('/memes/:id/vote', async (req, res) => {
     console.error('Supabase fetch error:', fetchError?.message || 'Meme not found');
     return res.status(404).send('Meme not found');
   }
-  
   const newUpvotes = meme.upvotes + increment;
   const { data, error } = await supabase
     .from('memes')
@@ -135,7 +139,6 @@ app.post('/memes/:id/vote', async (req, res) => {
     return res.status(500).send('Server glitch: ' + error.message);
   }
   io.emit('vote_update', { meme_id: parseInt(id), upvotes: data[0].upvotes });
-  // Update leaderboard cache
   const { data: leaderboard } = await supabase
     .from('memes')
     .select('id, title, upvotes')
@@ -146,15 +149,17 @@ app.post('/memes/:id/vote', async (req, res) => {
   res.json(data[0]);
 });
 
+// Get leaderboard
 app.get('/leaderboard', async (req, res) => {
   console.log('Hit /leaderboard endpoint');
   res.json(leaderboardCache);
 });
 
+// Socket.IO connection
 io.on('connection', (socket) => {
   console.log('User jacked into the neon jungle');
   socket.on('disconnect', () => console.log('User bailed'));
 });
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000; // Use Render's PORT env var
 server.listen(PORT, () => console.log(`Server jacked in at port ${PORT}`));
