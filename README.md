@@ -1,4 +1,4 @@
-DEPLOYED URL: https://citymall-meme-assignment-f2xl7hq3a.vercel.app/
+DEPLOYED URL: https://citymall-meme-assignment-hjv1osmjx.vercel.app/
 
 # Cybermeme Marketplace
 
