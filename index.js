@@ -53,7 +53,7 @@ async function generateAICaptionAndVibe(title, tags, image_url) {
 }
 
 // Basic route
-app.get('/', (req, res) => res.send('Cybermeme Market: Neon chaos awaits!'));
+app.get('/', (req, res) => res.send('Cybermeme Market: Neon chaos awaits!!!'));
 
 // Get all memes
 app.get('/memes', async (req, res) => {
