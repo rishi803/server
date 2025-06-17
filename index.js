@@ -10,7 +10,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { 
   cors: { 
-    origin: 'http://localhost:3001',
+    origin: 'https://citymall-meme-assignment-f2xl7hq3a.vercel.app',
     methods: ['GET', 'POST']
   },
   pingTimeout: 60000,
@@ -20,7 +20,7 @@ const io = new Server(server, {
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-app.use(cors({ origin: 'http://localhost:3001' }));
+app.use(cors({ origin: 'https://citymall-meme-assignment-f2xl7hq3a.vercel.app' }));
 app.use(express.json());
 
 // Mock users for hackathon
