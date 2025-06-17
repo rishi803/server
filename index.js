@@ -29,7 +29,6 @@ const users = { 'neonhacker': { id: 1, credits: 1000 }, 'cybershadow': { id: 2, 
 // In-memory cache for leaderboard
 let leaderboardCache = [];
 
-// Generate AI caption and vibe
 async function generateAICaptionAndVibe(title, tags, image_url) {
   try {
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
